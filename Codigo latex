@@ -1,0 +1,454 @@
+\documentclass[sbc]{article}
+\usepackage{graphicx}
+\usepackage[brazil]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+
+\title{Documentação do Grupo 11}
+\author{Raíssa Tayná Xavier dos Santos - 5790}
+
+\begin{document}
+\maketitle
+
+\section{Definição da Estrutura de Instrução RISC-V}
+Esta seção descreve a estrutura de dados que representa uma instrução no formato RISC-V. Cada campo da estrutura corresponde a partes específicas de uma instrução RISC-V, como opcode, registradores, imediatos e campos funcionais.
+
+\subsection{Estrutura de Instrução RISC-V}
+\begin{lstlisting}
+// Definicao de uma estrutura para representar uma instrucao RISC-V
+typedef struct {
+    char opcode[8]; // Opcode da instrução (7 bits)
+    int rs1;        // Registrador rs1 (5 bits)
+    int rs2;        // Registrador rs2 (5 bits)
+    int rd;         // Registrador rd (5 bits)
+    int imm;        // Imediato (12 bits)
+    int func3;      // Campo func3 (3 bits)
+} RISC_V_Instruction;
+\end{lstlisting}
+
+A estrutura acima define os campos de uma instrução RISC-V, incluindo o opcode, registradores rs1, rs2, rd, o imediato imm e o campo func3.
+
+\section{Função para Converter Decimal para Binário}
+Esta função converte um número decimal em uma representação binária com um número específico de bits.
+
+\subsection{Código para Conversão Decimal para Binário}
+\begin{lstlisting}
+// Funcão para converter um número decimal para binario com 
+// um determinado número de bits
+char *to_binary(int num, int bits) {
+    static char bin[17];
+    bin[bits] = '\0';
+
+    int i;
+    for (i = bits - 1; i >= 0; i--) {
+        bin[i] = (num & 1) + '0';
+        num >>= 1;
+    }
+    return bin;
+}
+\end{lstlisting}
+
+A função acima recebe um número decimal e o número de bits desejado para representação binária e retorna uma string contendo a representação binária do número.
+
+\section{Função para Criar uma Instrução RISC-V}
+Esta função cria e retorna uma nova instrução RISC-V com os valores passados como argumentos. Ela aloca memória para a instrução e inicializa seus campos com os valores fornecidos.
+
+\subsection{Código para Criação de Instrução RISC-V}
+\begin{lstlisting}
+RISC_V_Instruction *create_instruction(char *opcode, int rs1, int rs2, 
+int rd, int imm, int func3) {
+// Função para criar uma nova instrução RISC-V
+RISC_V_Instruction *create_instruction(char *opcode, int rs1, int rs2, 
+int rd, int imm, int func3) {
+    RISC_V_Instruction *instruction = (RISC_V_Instruction *)malloc
+    (sizeof(RISC_V_Instruction));
+    if (instruction == NULL) {
+        return NULL; // Erro de alocação de memória
+    }
+
+    strcpy(instruction->opcode, opcode);
+    instruction->rs1 = rs1;
+    instruction->rs2 = rs2;
+    instruction->rd = rd;
+    instruction->imm = imm;
+    instruction->func3 = func3;
+
+    return instruction;
+}
+\end{lstlisting}
+
+A função acima cria uma nova instrução RISC-V com os valores passados como argumentos.
+
+\section{Função para Montar uma Instrução RISC-V em Binário}
+Esta função monta uma instrução RISC-V em uma representação binária. Ela aloca memória para a string binária e preenche os bits de acordo com o formato da instrução RISC-V.
+
+\subsection{Código para Montagem de Instrução RISC-V em Binário}
+\begin{lstlisting}
+// Funcao para montar uma instrução RISC-V em binario
+char *assemble_instruction(RISC_V_Instruction *instruction) {
+    char *binary_instruction = (char *)malloc(sizeof(char) * 33); 
+    // 32 bits + null terminator
+    if (binary_instruction == NULL) {
+        return NULL; // Erro de alocação de memória
+    }
+
+    sprintf(binary_instruction, "%s", instruction->opcode);
+    
+    // Formato I: opcode rs1 funct3 rd imm
+    if (strcmp(instruction->opcode, "0000011") == 0 ||
+    strcmp(instruction->opcode, "0100011") == 0 ||
+    strcmp(instruction->opcode, "0010011") == 0 ||
+    strcmp(instruction->opcode, "1100011") == 0) {
+        strcat(binary_instruction, to_binary(instruction->rs1, 5));
+        strcat(binary_instruction, to_binary(instruction->func3, 3));
+        strcat(binary_instruction, to_binary(instruction->rd, 5));
+        strcat(binary_instruction, to_binary(instruction->imm, 12));
+    } 
+    // Formato R: opcode rs1 rs2 funct3 rd funct7
+    else if (strcmp(instruction->opcode, "0110011") == 0) {
+        strcat(binary_instruction, to_binary(instruction->rs1, 5));
+        strcat(binary_instruction, to_binary(instruction->rs2, 5));
+        strcat(binary_instruction, to_binary(instruction->func3, 3));
+        strcat(binary_instruction, to_binary(instruction->rd, 5));
+        strcat(binary_instruction, "0000000");
+    }
+    // Formato SB: opcode rs1 rs2 funct3 imm
+    else if (strcmp(instruction->opcode, "1100011") == 0) {
+        strcat(binary_instruction, to_binary(instruction->rs1, 5));
+        strcat(binary_instruction, to_binary(instruction->rs2, 5));
+        strcat(binary_instruction, to_binary(instruction->func3, 3));
+        strcat(binary_instruction, to_binary(instruction->imm, 12));
+    }
+
+    return binary_instruction;
+}
+\end{lstlisting}
+
+A função acima monta uma instrução RISC-V em uma representação binária de acordo com o formato da instrução.
+
+\section{Função para Processar Pseudo-Instruções:}
+\subsection{Código para Processar Pseudo-Instruções}
+\begin{lstlisting}
+// Funcao para processar pseudo-instrucoes
+e converter em instruções RISC-V
+void process_pseudo_instructions(char *line) {
+    // Implementação de pseudo-instruções
+    if (strstr(line, "li") != NULL) {
+        int rd, imm;
+        sscanf(line, "%*s x%d, %d", &rd, &imm);
+        printf("addi x%d, x0, %d\n", rd, imm);
+    }
+}
+\end{lstlisting}
+
+Esta função processa pseudo-instruções presentes no código assembly e as converte em uma ou mais instruções RISC-V. No exemplo dado, a pseudo-instrução li é convertida em uma instrução addi.
+
+\section{Função para Converter um Número de uma Base para Outra:}
+\subsection{Código para converter um Número de uma Base para Outra:}
+\begin{lstlisting}
+// Funcao para converter um numero de uma base para outra
+int convert_base(char *str, int base) {
+    return strtol(str, NULL, base);
+}
+\end{lstlisting}
+
+Esta função converte uma string representando um número em uma base específica para um número decimal. Ela utiliza a função strtol da biblioteca padrão do C para realizar a conversão.
+
+\section{Função para Implementar as Instruções do Grupo 11:}
+\subsection{Código para implementar as Instruções do Grupo 11:}
+\begin{lstlisting}
+// Funcao para implementar as instrucoes do Grupo 11: 
+// lh, sh, add, or, andi, sll, bne
+void implement_group_11_instructions(char *line) {
+    char opcode[8];
+    int rs1, rs2, rd, imm;
+    int func3;
+
+    if (strstr(line, "lh") != NULL) {
+        strcpy(opcode, "0000011");
+        sscanf(line, "%*s x%d, %d(x%d)", &rd, &imm, &rs1);
+        func3 = 2;
+    } 
+    else if (strstr(line, "sh") != NULL) {
+        strcpy(opcode, "0100011");
+        sscanf(line, "%*s x%d, %d(x%d)", &rs2, &imm, &rs1);
+        func3 = 2;
+    } 
+    else if (strstr(line, "add") != NULL) {
+        strcpy(opcode, "0110011");
+        sscanf(line, "%*s x%d, x%d, x%d", &rd, &rs1, &rs2);
+        func3 = 0;
+    } 
+    else if (strstr(line, "or") != NULL) {
+        strcpy(opcode, "0110011");
+        sscanf(line, "%*s x%d, x%d, x%d", &rd, &rs1, &rs2);
+        func3 = 6;
+    } 
+    else if (strstr(line, "andi") != NULL) {
+        strcpy(opcode, "0010011");
+        sscanf(line, "%*s x%d, x%d, %d", &rd, &rs1, &imm);
+        func3 = 7;
+    } 
+    else if (strstr(line, "sll") != NULL) {
+        strcpy(opcode, "0110011");
+        sscanf(line, "%*s x%d, x%d, %d", &rd, &rs1, &rs2);
+        func3 = 1;
+    } 
+    else if (strstr(line, "bne") != NULL) {
+        strcpy(opcode, "1100011");
+        sscanf(line, "%*s x%d, x%d, %d", &rs1, &rs2, &imm);
+        func3 = 1;
+    } 
+    else {
+        printf("Instrucao nao suportada ou não implementada: 
+        %s\n", line);
+        return;
+    }
+
+    RISC_V_Instruction *instruction = create_instruction(opcode, rs1,
+    rs2, rd, imm, func3);
+    if (instruction == NULL) {
+        printf("Erro ao criar a instrução.\n");
+        return;
+    }
+
+    char *binary_instruction = assemble_instruction(instruction);
+    if (binary_instruction == NULL) {
+        printf("Erro ao montar a instrução.\n");
+        free(instruction);
+        return;
+    }
+
+    printf("%s\n", binary_instruction);
+
+    free(instruction);
+    free(binary_instruction);
+}
+\end{lstlisting}
+Esta função implementa as instruções do Grupo 11, que incluem lh, sh, add, or, andi, sll e bne. Ela analisa a linha de código assembly fornecida e cria a instrução RISC-V correspondente.
+
+
+\section{Função Principal (main)}
+Esta é a função principal do programa. Ela demonstra o uso das funções definidas anteriormente para criar e montar instruções RISC-V.
+
+\subsection{Código da Função Principal}
+\begin{lstlisting}
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        printf("Uso: %s <arquivo.asm> [-o <arquivo_saida>]\n", argv[0]);
+        return 1;
+    }
+
+    FILE *file = fopen(argv[1], "r");
+    if (file == NULL) {
+        printf("Erro ao abrir o arquivo de entrada.\n");
+        return 1;
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), file)) {
+        line[strcspn(line, "\n")] = '\0'; 
+        // Remove o caractere de nova linha
+
+        // Processar pseudo-instruções
+        process_pseudo_instructions(line);
+
+        // Implementar as instruções do Grupo 11
+        implement_group_11_instructions(line);
+    }
+
+    fclose(file);
+
+    // Verificar se foi passado o argumento -o para salvar 
+    // a saída em um arquivo
+    if (argc >= 4 && strcmp(argv[2], "-o") == 0) {
+        FILE *output_file = fopen(argv[3], "w");
+        if (output_file == NULL) {
+            printf("Erro ao criar o arquivo de saída.\n");
+            return 1;
+        }
+
+        file = fopen(argv[1], "r");
+        if (file == NULL) {
+            printf("Erro ao abrir o arquivo de entrada novamente.\n");
+            fclose(output_file);
+            return 1;
+        }
+
+        while (fgets(line, sizeof(line), file)) {
+            line[strcspn(line, "\n")] = '\0'; 
+            // Remove o caractere de nova linha
+
+            // Implementar as instruções do Grupo 11
+            implement_group_11_instructions(line);
+
+            RISC_V_Instruction *instruction = create_instruction("0000000", 
+            0, 0, 0, 0, 0); 
+            // Instrução vazia
+            if (instruction == NULL) {
+                printf("Erro ao criar a instrução.\n");
+                fclose(file);
+                fclose(output_file);
+                return 1;
+            }
+
+            char *binary_instruction = assemble_instruction(instruction);
+            if (binary_instruction == NULL) {
+                printf("Erro ao montar a instrução.\n");
+                free(instruction);
+                fclose(file);
+                fclose(output_file);
+                return 1;
+            }
+
+            fprintf(output_file, "%s\n", binary_instruction);
+
+            free(instruction);
+            free(binary_instruction);
+        }
+
+        fclose(file);
+        fclose(output_file);
+    }
+
+    return 0;
+}
+\end{lstlisting}
+
+Esta é a função principal do programa. Ela recebe os argumentos da linha de comando e executa o código principal do programa, que inclui abrir o arquivo de entrada, processar as linhas do arquivo, processar pseudo-instruções, implementar as instruções do Grupo 11 e, opcionalmente, salvar a saída em um arquivo.
+
+\section{Analisando como o código assembly (asm) é processado no programa:}
+\subsection{Processamento do Arquivo Assembly:}
+\begin{lstlisting}
+FILE *file = fopen(argv[1], "r");
+    if (file == NULL) {
+        printf("Erro ao abrir o arquivo de entrada.\n");
+        return 1;
+    }
+
+
+    char line[256];
+    while (fgets(line, sizeof(line), file)) {
+        line[strcspn(line, "\n")] = '\0'; 
+        // Remove o caractere de nova linha
+
+
+        // Processar pseudo-instrucoes
+        process_pseudo_instructions(line);
+
+
+        // Implementar as instrucoes do Grupo 11
+        implement_group_11_instructions(line);
+    }
+\end{lstlisting}
+
+Este trecho de código abre o arquivo de entrada fornecido como argumento da linha de comando e lê cada linha do arquivo em um loop. Cada linha é processada para verificar se contém pseudo-instruções ou instruções do Grupo 11.
+
+\subsection{Processamento de Pseudo-Instruções:}
+\begin{lstlisting}
+void process_pseudo_instructions(char *line) {
+    // Implementação de pseudo-instruções
+    if (strstr(line, "li") != NULL) {
+        int rd, imm;
+        sscanf(line, "%*s x%d, %d", &rd, &imm);
+        printf("addi x%d, x0, %d\n", rd, imm);
+    }
+}
+\end{lstlisting}
+
+Esta função verifica se a linha de código assembly contém pseudo-instruções, como li, que não são instruções diretas do RISC-V, mas são convenientes para o programador. No exemplo fornecido, a pseudo-instrução li é convertida em uma instrução addi do RISC-V.
+
+\subsection{Processamento das Instruções do Grupo 11:}
+\begin{lstlisting}
+// Funcao para implementar as instrucoes do Grupo 11: lh, sh,
+// add, or, andi, sll, bne
+void implement_group_11_instructions(char *line) {
+    char opcode[8];
+    int rs1, rs2, rd, imm;
+    int func3;
+
+    if (strstr(line, "lh") != NULL) {
+        strcpy(opcode, "0000011");
+        sscanf(line, "%*s x%d, %d(x%d)", &rd, &imm, &rs1);
+        func3 = 2;
+    } 
+    else if (strstr(line, "sh") != NULL) {
+        strcpy(opcode, "0100011");
+        sscanf(line, "%*s x%d, %d(x%d)", &rs2, &imm, &rs1);
+        func3 = 2;
+    } 
+    else if (strstr(line, "add") != NULL) {
+        strcpy(opcode, "0110011");
+        sscanf(line, "%*s x%d, x%d, x%d", &rd, &rs1, &rs2);
+        func3 = 0;
+    } 
+    else if (strstr(line, "or") != NULL) {
+        strcpy(opcode, "0110011");
+        sscanf(line, "%*s x%d, x%d, x%d", &rd, &rs1, &rs2);
+        func3 = 6;
+    } 
+    else if (strstr(line, "andi") != NULL) {
+        strcpy(opcode, "0010011");
+        sscanf(line, "%*s x%d, x%d, %d", &rd, &rs1, &imm);
+        func3 = 7;
+    } 
+    else if (strstr(line, "sll") != NULL) {
+        strcpy(opcode, "0110011");
+        sscanf(line, "%*s x%d, x%d, %d", &rd, &rs1, &rs2);
+        func3 = 1;
+    } 
+    else if (strstr(line, "bne") != NULL) {
+        strcpy(opcode, "1100011");
+        sscanf(line, "%*s x%d, x%d, %d", &rs1, &rs2, &imm);
+        func3 = 1;
+    } 
+    else {
+        printf("Instrução não suportada ou não implementada:
+        %s\n", line);
+        return;
+    }
+\end{lstlisting}
+
+Esta função analisa a linha de código assembly fornecida e verifica se ela contém uma das instruções do Grupo 11, que incluem lh, sh, add, or, andi, sll e bne. Se a instrução estiver presente, ela é convertida em uma instrução correspondente do RISC-V.
+Em resumo, o código assembly é processado linha por linha, onde cada linha é verificada para pseudo-instruções e instruções do Grupo 11. As pseudo-instruções são convertidas em instruções equivalentes do RISC-V, enquanto as instruções do Grupo 11 são implementadas diretamente em binário.
+
+\section{Explicando entrada.asm:}
+\begin{lstlisting}
+lh x1, 0(x2)
+sh x3, 4(x4)
+add x5, x6, x7
+or x8, x9, x10
+andi x11, x12, 16
+sll x13, x14, 3
+bne x15, x16, 100
+\end{lstlisting}
+
+Linha 1: Esta linha representa a instrução lh (load half-word), que carrega metade de uma palavra (16 bits) da memória para um registrador. No caso, está carregando o conteúdo da memória no endereço 0 + valor do registrador x2 para o registrador x1.
+
+Linha 2: Esta linha representa a instrução sh (store half-word), que armazena metade de uma palavra (16 bits) de um registrador na memória. Aqui, está armazenando o conteúdo do registrador x3 na memória no endereço 4 + valor do registrador x4.
+
+Linha 3: Esta linha representa a instrução add, que realiza a adição de dois registradores e armazena o resultado em um terceiro registrador. Neste caso, está somando os valores dos registradores x6 e x7 e armazenando o resultado no registrador x5.
+
+Linha 4: Esta linha representa a instrução or, que realiza a operação lógica OR bit a bit entre dois registradores e armazena o resultado em um terceiro registrador. Aqui, está realizando a operação OR entre os valores dos registradores x9 e x10 e armazenando o resultado no registrador x8.
+
+Linha 5: Esta linha representa a instrução andi (AND imediato), que realiza a operação lógica AND bit a bit entre o valor de um registrador e uma constante imediata e armazena o resultado em outro registrador. Neste caso, está realizando a operação AND entre o valor do registrador x12 e o valor imediato 16, armazenando o resultado no registrador x11.
+
+Linha 6: Esta linha representa a instrução sll (shift left logical), que desloca os bits para a esquerda em um registrador e preenche os bits menos significativos com zeros. Neste caso, está deslocando os bits do valor do registrador x14 em 3 posições para a esquerda e armazenando o resultado no registrador x13.
+
+Linha 7: Esta linha representa a instrução bne (branch not equal), que desvia o fluxo do programa se dois registradores não forem iguais. Neste caso, se o conteúdo dos registradores x15 e x16 não forem iguais, o programa desviará para a instrução localizada 100 instruções após a atual.
+
+\section{Saída no terminal:}
+\begin{lstlisting}
+PS C:\Users\raiss\Documents\UFV\OC1> gcc TP1_OC_5790.c -o montador_riscv
+PS C:\Users\raiss\Documents\UFV\OC1> ./montador_riscv entrada.asm    
+00000110001001000001000000000000
+01000110010001000000000000000100
+01100110011000111000001010000000
+01100110100101010110010000000000
+00100110110011101011000000010000
+01100110111000011001011010000000
+11000110111100100000000001100100
+\end{lstlisting}
+
+
+\end{document}
